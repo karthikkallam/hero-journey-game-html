@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero's Journey: Idle Incremental Game - Sprite Version</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="background-container">
+            <img id="background" src="backgrounds/background.png" alt="Background" />
+        </div>
+        <div id="hero-container">
+            <img id="hero-sprite" src="characterSprites/Idle.png" alt="Hero" />
+        </div>
+        <div id="monster-container">
+            <div id="monster-health-container">
+                <h3 id="monster-health">Monster Health: 50</h3>
+                <div id="monster-health-bar-container">
+                    <div id="monster-health-bar"></div>
+                </div>
+            </div>
+            <img id="monster-sprite" src="characterSprites/DemonIdle.png" alt="Monster" />
+        </div>
+        <div id="level-container">
+            <h2 id="level">Level: 1</h2>
+        </div>
+        <div id="stage-container">
+            <h3 id="stage">Stage: 1</h3>
+        </div>
+        <div id="hero-health-container">
+            <h3 id="hero-health">Hero Health: 100</h3>
+            <div id="experience-bar-container">
+                <div id="experience-bar"></div>
+            </div>
+        </div>
+        <div id="gold-container">
+            <h3 id="gold">Gold: 0</h3>
+        </div>
+        <div id="controls">
+            <button id="attack-button">Attack!</button>
+        </div>
+        <div id="chest-shop">
+            <h3>Chest Shop</h3>
+            <button id="buy-chest-1">Buy Small Chest (200 Gold)</button>
+            <button id="buy-chest-2">Buy Medium Chest (1500 Gold)</button>
+            <button id="buy-chest-3">Buy Large Chest (10000 Gold)</button>
+        </div>
+        <button id="hero-gear-button">Hero's Gear</button>
+        <div id="hero-gear-container" style="display:none;">
+            <h3>Hero's Gear <button class="close-button">X</button></h3>
+            <div id="inventory-container">
+                <ul id="inventory-list">
+                    <!-- Inventory items will be listed here -->
+                </ul>
+            </div>
+        </div>
+        <button id="crafting-button">Crafting</button>
+        <div id="crafting-container" style="display:none;">
+            <h3>Crafting Recipes <button class="close-button">X</button></h3>
+            <ul id="crafting-list">
+                <li><button id="craft-sword">Craft Sword (5 Iron, 2 Leather)</button></li>
+                <li><button id="craft-armor">Craft Armor (10 Iron, 5 Leather)</button></li>
+                <li><button id="craft-potion">Craft Healing Potion (3 Herbs)</button></li>
+            </ul>
+        </div>
+        <button id="stats-button">Stats</button>
+        <div id="stats-container" style="display:none;">
+            <h3>Hero Stats <button class="close-button">X</button></h3>
+            <p id="hero-damage">Damage: 10</p>
+            <p id="hero-attack-speed">Attack Speed: 1.0s</p>
+            <p id="time-played">Total Time Played: 0s</p>
+            <p id="hero-abilities">Special Abilities: None</p>
+            <p id="energy">Energy: 100</p>
+        </div>
+        <button id="skill-tree-button">Skill Tree</button>
+        <div id="skill-tree-container" style="display:none;">
+            <h3>Hero Skill Tree <button class="close-button">X</button></h3>
+            <ul id="skill-list">
+                <li><button id="skill-attack-boost">Attack Boost (+10% Damage)</button></li>
+                <li><button id="skill-attack-speed-boost">Attack Speed Boost (+10% Speed)</button></li>
+                <li><button id="skill-gold-boost">Gold Gain Boost (+10% Gold)</button></li>
+                <li><button id="skill-special-ability">Unlock Special Ability: Healing (+20 Health every 10s)</button></li>
+                <li><button id="skill-energy-boost">Energy Boost (+20 Max Energy)</button></li>
+            </ul>
+        </div>
+        <button id="prestige-button">Prestige</button>
+        <div id="prestige-container" style="display:none;">
+            <h3>Prestige Mode <button class="close-button">X</button></h3>
+            <p>Prestige to gain permanent bonuses, but reset your hero to Level 1.</p>
+            <button id="prestige-confirm-button">Prestige Now</button>
+        </div>
+        <div id="energy-container">
+            <h3>Energy: <span id="energy-value">100</span></h3>
+        </div>
+        <button id="random-event-button" style="display:none;">Random Event!</button>
+        <div id="random-event-container" style="display:none;">
+            <h3>Random Event! <button class="close-button">X</button></h3>
+            <p id="event-description">A treasure goblin appears! Defeat it for extra gold!</p>
+            <button id="event-action-button">Engage!</button>
+        </div>
+        <div id="materials-message" style="position: absolute; top: 10%; left: 50%; transform: translateX(-50%); color: white; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; display: none; text-align: center; font-size: 1.2em; transition: opacity 1s ease-out;">
+        </div>
+        <audio id="attack-sound" src="audio/attack.mp3"></audio>
+        <audio id="craft-sound" src="audio/craft.mp3"></audio>
+        <audio id="healing-sound" src="audio/healing.mp3"></audio>
+        <audio id="gold-collect-sound" src="audio/gold.mp3"></audio>
+    </div>
+    <script>
+    // Hero's Journey: Idle Incremental Game - JavaScript Logic (Sprite Version)
+
+    let level = 1;
+    let heroLevel = 1;
+    let environmentLevel = 1;
+    let experience = 0;
+    let experienceNeeded = 100;
+    let baseAttack = 10;
+    let idleDamageMultiplier = 0.5;
+    let health = 100;
+    let gold = 0;
+    let stage = 1;
+    let monsterHealth = 60;
+    let inventory = [];
+    let materials = { iron: 0, leather: 0, herbs: 0 };
+    let totalTimePlayed = 0;
+    let heroAttackSpeed = 1.0;
+    let heroDamage = baseAttack;
+    let prestigeLevel = 0;
+    let prestigeBonus = 1;
+    let energy = 100;
+    let energyRegenRate = 2;
+    let energyMax = 100;
+    let heroSpecialAbilities = [];
+    let rarityColors = {
+        "common": "gray",
+        "uncommon": "green",
+        "rare": "blue",
+        "epic": "purple",
+        "legendary": "gold"
+    };
+
+    const levelElement = document.getElementById("level");
+    const heroHealthElement = document.getElementById("hero-health");
+    const monsterHealthElement = document.getElementById("monster-health");
+    const monsterHealthBarElement = document.getElementById("monster-health-bar");
+    const goldElement = document.getElementById("gold");
+    const experienceBarElement = document.getElementById("experience-bar");
+    const attackButton = document.getElementById("attack-button");
+    const heroSpriteElement = document.getElementById("hero-sprite");
+    const monsterSpriteElement = document.getElementById("monster-sprite");
+    const backgroundElement = document.getElementById("background");
+    const inventoryListElement = document.getElementById("inventory-list");
+    const buyChest1Button = document.getElementById("buy-chest-1");
+    const buyChest2Button = document.getElementById("buy-chest-2");
+    const buyChest3Button = document.getElementById("buy-chest-3");
+    const craftingButton = document.getElementById("crafting-button");
+    const craftingContainer = document.getElementById("crafting-container");
+    const craftSwordButton = document.getElementById("craft-sword");
+    const craftArmorButton = document.getElementById("craft-armor");
+    const craftPotionButton = document.getElementById("craft-potion");
+    const stageElement = document.getElementById("stage");
+    const statsButton = document.getElementById("stats-button");
+    const statsContainer = document.getElementById("stats-container");
+    const heroDamageElement = document.getElementById("hero-damage");
+    const heroAttackSpeedElement = document.getElementById("hero-attack-speed");
+    const timePlayedElement = document.getElementById("time-played");
+    const heroAbilitiesElement = document.getElementById("hero-abilities");
+    const skillTreeButton = document.getElementById("skill-tree-button");
+    const skillTreeContainer = document.getElementById("skill-tree-container");
+    const skillAttackBoostButton = document.getElementById("skill-attack-boost");
+    const skillAttackSpeedBoostButton = document.getElementById("skill-attack-speed-boost");
+    const skillGoldBoostButton = document.getElementById("skill-gold-boost");
+    const skillSpecialAbilityButton = document.getElementById("skill-special-ability");
+    const skillEnergyBoostButton = document.getElementById("skill-energy-boost");
+    const prestigeButton = document.getElementById("prestige-button");
+    const prestigeContainer = document.getElementById("prestige-container");
+    const prestigeConfirmButton = document.getElementById("prestige-confirm-button");
+    const heroGearButton = document.getElementById("hero-gear-button");
+    const heroGearContainer = document.getElementById("hero-gear-container");
+    const energyElement = document.getElementById("energy-value");
+    const randomEventButton = document.getElementById("random-event-button");
+    const randomEventContainer = document.getElementById("random-event-container");
+    const eventDescriptionElement = document.getElementById("event-description");
+    const eventActionButton = document.getElementById("event-action-button");
+    const materialsMessageElement = document.getElementById("materials-message");
+    const attackSound = document.getElementById("attack-sound");
+    const craftSound = document.getElementById("craft-sound");
+    const healingSound = document.getElementById("healing-sound");
+    const goldCollectSound = document.getElementById("gold-collect-sound");
+    const closeButtons = document.querySelectorAll(".close-button");
+
+    closeButtons.forEach(button => {
+        button.addEventListener("click", (e) => {
+            e.target.parentElement.parentElement.style.display = "none";
+        });
+    });
+
+    // Idle Combat
+    setInterval(() => {
+        dealIdleDamage();
+        totalTimePlayed += 1;
+        regenerateEnergy();
+        activateHeroAbilities();
+        updateStats();
+    }, 1000);
+
+    // Active Combat
+    attackButton.addEventListener("click", () => {
+        if (energy >= 10) {
+            dealActiveDamage();
+            energy -= 10;
+            updateEnergy();
+            attackSound.play();
+        } else {
+            alert("Not enough energy!");
+        }
+    });
+
+    // Buying Chests
+    buyChest1Button.addEventListener("click", () => {
+        buyChest(200, "Small");
+    });
+
+    buyChest2Button.addEventListener("click", () => {
+        buyChest(1500, "Medium");
+    });
+
+    buyChest3Button.addEventListener("click", () => {
+        buyChest(10000, "Large");
+    });
+
+    // Show Stats
+    statsButton.addEventListener("click", () => {
+        toggleButton(statsContainer);
+    });
+
+    // Show Skill Tree
+    skillTreeButton.addEventListener("click", () => {
+        toggleButton(skillTreeContainer);
+    });
+
+    // Show Hero Gear
+    heroGearButton.addEventListener("click", () => {
+        toggleButton(heroGearContainer);
+        updateInventory();
+    });
+
+    // Show Crafting Menu
+    craftingButton.addEventListener("click", () => {
+        toggleButton(craftingContainer);
+    });
+
+    // Skill Tree Upgrades
+    skillAttackBoostButton.addEventListener("click", () => {
+        heroDamage *= 1.1;
+        updateStats();
+    });
+
+    skillAttackSpeedBoostButton.addEventListener("click", () => {
+        heroAttackSpeed *= 0.9;
+        updateStats();
+    });
+
+    skillGoldBoostButton.addEventListener("click", () => {
+        gold += gold * 0.1;
+        updateStats();
+        goldCollectSound.play();
+    });
+
+    skillSpecialAbilityButton.addEventListener("click", () => {
+        heroSpecialAbilities.push("Healing");
+        heroAbilitiesElement.textContent = `Special Abilities: ${heroSpecialAbilities.join(", ")}`;
+    });
+
+    skillEnergyBoostButton.addEventListener("click", () => {
+        energyMax += 20;
+        updateEnergy();
+    });
+
+    // Prestige Mechanics
+    prestigeButton.addEventListener("click", () => {
+        toggleButton(prestigeContainer);
+    });
+
+    prestigeConfirmButton.addEventListener("click", () => {
+        prestige();
+    });
+
+    // Crafting Mechanics
+    craftSwordButton.addEventListener("click", () => {
+        if (materials.iron >= 5 && materials.leather >= 2) {
+            materials.iron -= 5;
+            materials.leather -= 2;
+            let item = generateCraftedItem("Crafted Sword", "sword", 20, "epic");
+            inventory.push(item);
+            updateInventory();
+            displayMaterialsMessage("You crafted a Sword!");
+            craftSound.play();
+        } else {
+            alert("Not enough materials!");
+        }
+    });
+
+    craftArmorButton.addEventListener("click", () => {
+        if (materials.iron >= 10 && materials.leather >= 5) {
+            materials.iron -= 10;
+            materials.leather -= 5;
+            let item = generateCraftedItem("Crafted Armor", "body armor", 40, "legendary");
+            inventory.push(item);
+            updateInventory();
+            displayMaterialsMessage("You crafted Armor!");
+            craftSound.play();
+        } else {
+            alert("Not enough materials!");
+        }
+    });
+
+    craftPotionButton.addEventListener("click", () => {
+        if (materials.herbs >= 3) {
+            materials.herbs -= 3;
+            health += 50;
+            if (health > 100 + (heroLevel * 20)) {
+                health = 100 + (heroLevel * 20);
+            }
+            updateUI();
+            displayMaterialsMessage("You crafted a Healing Potion and restored health!");
+            healingSound.play();
+        } else {
+            alert("Not enough materials!");
+        }
+    });
+
+    // Random Events
+    setInterval(() => {
+        if (Math.random() < 0.05) {
+            triggerRandomEvent();
+        }
+    }, 10000);
+
+    eventActionButton.addEventListener("click", () => {
+        handleRandomEvent();
+    });
+
+    function toggleButton(element) {
+        // Close all other containers
+        statsContainer.style.display = "none";
+        skillTreeContainer.style.display = "none";
+        prestigeContainer.style.display = "none";
+        heroGearContainer.style.display = "none";
+        craftingContainer.style.display = "none";
+        randomEventContainer.style.display = "none";
+        
+        // Toggle the selected element
+        element.style.display = element.style.display === "none" ? "block" : "none";
+    }
+
+    function dealIdleDamage() {
+        let damage = baseAttack * idleDamageMultiplier * prestigeBonus;
+        monsterHealth -= damage;
+        updateMonsterHealth();
+        checkMonsterDefeated();
+    }
+
+    function dealActiveDamage() {
+        let attackFrames = ["characterSprites/Attack_1.png", "characterSprites/Attack_2.png", "characterSprites/Attack_1.png"];
+        let currentFrame = 0;
+        const attackAnimationInterval = setInterval(() => {
+            heroSpriteElement.src = attackFrames[currentFrame];
+            currentFrame++;
+            if (currentFrame >= attackFrames.length) {
+                clearInterval(attackAnimationInterval);
+                heroSpriteElement.src = "characterSprites/Idle.png";
+            }
+        }, 200);
+
+        monsterHealth -= heroDamage * prestigeBonus;
+        monsterSpriteElement.classList.add("shake");
+        setTimeout(() => {
+            monsterSpriteElement.classList.remove("shake");
+        }, 200);
+
+        updateMonsterHealth();
+        checkMonsterDefeated();
+    }
+
+    function activateHeroAbilities() {
+        if (heroSpecialAbilities.includes("Healing")) {
+            health += 20;
+            if (health > 100 + (heroLevel * 20)) {
+                health = 100 + (heroLevel * 20);
+            }
+            updateUI();
+            healingSound.play();
+        }
+    }
+
+    function updateMonsterHealth() {
+        if (monsterHealth < 0) monsterHealth = 0;
+        monsterHealthElement.textContent = `Monster Health: ${Math.floor(monsterHealth)}`;
+        monsterHealthBarElement.style.width = `${(monsterHealth / (50 * Math.pow(1.2, environmentLevel))) * 100}%`;
+        updateGameArea();
+    }
+
+    function checkMonsterDefeated() {
+        if (monsterHealth <= 0) {
+            gold += 10 * stage * prestigeBonus;
+            experience += 20 * stage;
+            dropMaterials();
+            checkHeroLevelUp();
+            checkStageLevelUp();
+            spawnNewMonster();
+            dropItemFromMonster();
+            updateUI();
+            goldCollectSound.play();
+        }
+    }
+
+    function checkHeroLevelUp() {
+        while (experience >= experienceNeeded) {
+            experience -= experienceNeeded;
+            heroLevel++;
+            experienceNeeded *= 1.5;
+            baseAttack *= 1.1;
+            heroDamage = baseAttack;
+            heroAttackSpeed *= 0.95;
+            health += 20;
+        }
+        updateUI();
+    }
+
+    function checkStageLevelUp() {
+        if (stage % 10 === 0) {
+            environmentLevel++;
+            stage = 1;
+        } else {
+            stage++;
+        }
+        stageElement.textContent = `Stage: ${stage}`;
+        levelElement.textContent = `Level: ${environmentLevel}`;
+        if (environmentLevel % 5 === 0) {
+            backgroundElement.src = `backgrounds/background${Math.floor(environmentLevel / 5)}.png`;
+        }
+    }
+
+    function spawnNewMonster() {
+        if (stage % 10 === 0) {
+            monsterSpriteElement.src = "characterSprites/DragonIdle.png";
+        } else {
+            const monsters = [
+                "characterSprites/DemonIdle.png",
+                "characterSprites/JinnIdle.png",
+                "characterSprites/LizardIdle.png",
+                "characterSprites/DragonIdle.png" // Added a new monster
+            ];
+            const randomMonster = monsters[Math.floor(Math.random() * monsters.length)];
+            monsterSpriteElement.src = randomMonster;
+        }
+        monsterHealth = 50 * Math.pow(1.2, environmentLevel);
+        updateMonsterHealth();
+        updateGameArea();
+    }
+
+    function updateGameArea() {
+    }
+
+    function updateUI() {
+        heroHealthElement.textContent = `Hero Health: ${health}`;
+        goldElement.textContent = `Gold: ${gold}`;
+        experienceBarElement.style.width = `${(experience / experienceNeeded) * 100}%`;
+        levelElement.textContent = `Level: ${environmentLevel}`;
+        stageElement.textContent = `Stage: ${stage}`;
+        updateEnergy();
+    }
+
+    function buyChest(cost, size) {
+        if (gold >= cost) {
+            gold -= cost;
+            let item = generateItem(size);
+            inventory.push(item);
+            giveChestMaterials(size);
+            applyItemBuffs(item);
+            updateInventory();
+            updateUI();
+            displayDropMessage(item);
+        } else {
+            alert("Not enough gold!");
+        }
+    }
+
+    function generateItem(size) {
+        let types = ["boots", "pants", "body armor", "helmet", "sword"];
+        let itemType = types[Math.floor(Math.random() * types.length)];
+        let itemName = `${size} Chest ${itemType}`;
+        let attackBoost = Math.floor(Math.random() * (size === "Small" ? 5 : size === "Medium" ? 15 : 50)) + 1;
+        let rarity = determineItemRarity(size);
+        return { name: itemName, type: itemType, attackBoost: attackBoost, rarity: rarity };
+    }
+
+    function generateCraftedItem(name, type, attackBoost, rarity) {
+        return { name: name, type: type, attackBoost: attackBoost, rarity: rarity };
+    }
+
+    function determineItemRarity(size) {
+        const rarities = ["common", "uncommon", "rare", "epic", "legendary"];
+        let index = size === "Small" ? 0 : size === "Medium" ? 2 : 4;
+        return rarities[Math.floor(Math.random() * (index + 1))];
+    }
+
+    function applyItemBuffs(item) {
+        heroDamage += item.attackBoost;
+    }
+
+    function updateInventory() {
+        inventoryListElement.innerHTML = "";
+        inventory.forEach((item, index) => {
+            let listItem = document.createElement("li");
+            listItem.textContent = `${item.name} - Attack Boost: ${item.attackBoost}`;
+            listItem.style.color = rarityColors[item.rarity];
+            listItem.addEventListener("mouseover", () => {
+                listItem.title = `Type: ${item.type}\nRarity: ${item.rarity}\nAttack Boost: ${item.attackBoost}`;
+            });
+            listItem.addEventListener("click", () => {
+                equipItem(item);
+            });
+            inventoryListElement.appendChild(listItem);
+        });
+    }
+
+    function equipItem(item) {
+        let equippedItem = inventory.find(i => i.type === item.type && i.equipped);
+        if (equippedItem) {
+            heroDamage -= equippedItem.attackBoost;
+            equippedItem.equipped = false;
+        }
+        item.equipped = true;
+        heroDamage += item.attackBoost;
+        updateStats();
+        updateUI();
+    }
+
+    function displayDropMessage(item) {
+        const message = document.createElement("div");
+        message.textContent = `You found a ${item.rarity} item: ${item.name}`;
+        message.style.position = "absolute";
+        message.style.top = "10px";
+        message.style.width = "100%";
+        message.style.textAlign = "center";
+        message.style.color = rarityColors[item.rarity];
+        message.style.fontSize = "1.5em";
+        message.style.opacity = "1";
+        message.style.transition = "opacity 2s ease-out";
+        document.body.appendChild(message);
+        setTimeout(() => {
+            message.style.opacity = "0";
+            setTimeout(() => document.body.removeChild(message), 2000);
+        }, 2000);
+    }
+
+    function dropItemFromMonster() {
+        let dropChance = Math.random();
+        if (stage % 10 === 0 || dropChance < 0.1) {
+            let size = stage % 10 === 0 ? "Large" : "Small";
+            let item = generateItem(size);
+            inventory.push(item);
+            applyItemBuffs(item);
+            updateInventory();
+            displayDropMessage(item);
+        }
+    }
+
+    function dropMaterials() {
+        materials.iron += Math.floor(Math.random() * 3);
+        materials.leather += Math.floor(Math.random() * 2);
+        materials.herbs += Math.floor(Math.random() * 2);
+        displayMaterialsMessage(`Materials collected: Iron (${materials.iron}), Leather (${materials.leather}), Herbs (${materials.herbs})`);
+    }
+
+    function giveChestMaterials(size) {
+        if (size === "Small") {
+            materials.iron += Math.floor(Math.random() * 3);
+            materials.leather += Math.floor(Math.random() * 2);
+        } else if (size === "Medium") {
+            materials.iron += Math.floor(Math.random() * 5);
+            materials.leather += Math.floor(Math.random() * 3);
+            materials.herbs += Math.floor(Math.random() * 2);
+        } else if (size === "Large") {
+            materials.iron += Math.floor(Math.random() * 10);
+            materials.leather += Math.floor(Math.random() * 5);
+            materials.herbs += Math.floor(Math.random() * 5);
+        }
+        displayMaterialsMessage(`Materials received from chest: Iron (${materials.iron}), Leather (${materials.leather}), Herbs (${materials.herbs})`);
+    }
+
+    function displayMaterialsMessage(message) {
+        materialsMessageElement.textContent = message;
+        materialsMessageElement.style.display = "block";
+        materialsMessageElement.style.opacity = "1";
+        setTimeout(() => {
+            materialsMessageElement.style.opacity = "0";
+            setTimeout(() => {
+                materialsMessageElement.style.display = "none";
+            }, 1000);
+        }, 2000);
+    }
+
+    function updateStats() {
+        heroDamageElement.textContent = `Damage: ${heroDamage}`;
+        heroAttackSpeedElement.textContent = `Attack Speed: ${heroAttackSpeed.toFixed(2)}s`;
+        timePlayedElement.textContent = `Total Time Played: ${totalTimePlayed}s`;
+        energyElement.textContent = `Energy: ${energy}`;
+    }
+
+    function prestige() {
+        prestigeLevel++;
+        prestigeBonus = 1 + prestigeLevel * 0.1;
+        level = 1;
+        heroLevel = 1;
+        environmentLevel = 1;
+        experience = 0;
+        experienceNeeded = 100;
+        baseAttack = 10;
+        health = 100;
+        gold = 0;
+        stage = 1;
+        monsterHealth = 60;
+        inventory = [];
+        materials = { iron: 0, leather: 0, herbs: 0 };
+        heroAttackSpeed = 1.0;
+        heroDamage = baseAttack;
+        heroSpecialAbilities = [];
+        totalTimePlayed = 0;
+        energyMax = 100;
+        energy = energyMax;
+        updateUI();
+        updateInventory();
+        alert("You have prestiged! You now gain permanent bonuses.");
+    }
+
+    function regenerateEnergy() {
+        if (energy < energyMax) {
+            energy += energyRegenRate;
+            if (energy > energyMax) energy = energyMax;
+            updateEnergy();
+        }
+    }
+
+    function updateEnergy() {
+        energyElement.textContent = energy;
+    }
+
+    function triggerRandomEvent() {
+        randomEventButton.style.display = "block";
+        toggleButton(randomEventContainer);
+        eventDescriptionElement.textContent = "A treasure goblin appears! Defeat it for extra gold!";
+    }
+
+    function handleRandomEvent() {
+        let success = Math.random() < 0.5;
+        if (success) {
+            gold += 500;
+            alert("You defeated the treasure goblin and got 500 gold!");
+            goldCollectSound.play();
+        } else {
+            alert("The treasure goblin escaped!");
+        }
+        randomEventButton.style.display = "none";
+        toggleButton(randomEventContainer);
+        updateUI();
+    }
+
+    updateGameArea();
+    updateUI();
+    </script>
+</body>
+</html>
+
+<style>
+/* Hero's Journey: Idle Incremental Game - Styles (Sprite Version) */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+}
+
+#background-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    filter: blur(2px);
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#hero-container {
+    position: absolute;
+    left: 30%;
+    bottom: 10%;
+    text-align: center;
+}
+
+#monster-container {
+    position: absolute;
+    right: 30%;
+    bottom: 10%;
+    text-align: center;
+}
+
+#monster-health-container {
+    position: relative;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#monster-health {
+    font-size: 2em;
+    color: red;
+    text-shadow: 2px 2px 4px black;
+}
+
+#monster-health-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+#monster-health-bar {
+    width: 100%;
+    height: 100%;
+    background-color: #ff4c4c;
+    transition: width 0.3s;
+}
+
+#level-container {
+    position: absolute;
+    left: 5%;
+    top: 5%;
+    font-size: 1.5em;
+    color: white;
+    text-align: left;
+    text-shadow: 2px 2px 4px black;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#stage-container {
+    position: absolute;
+    left: 25%;
+    top: 5%;
+    font-size: 1.5em;
+    color: white;
+    text-align: left;
+    text-shadow: 2px 2px 4px black;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#hero-health-container {
+    position: absolute;
+    left: 30%;
+    bottom: 25%;
+    font-size: 1.2em;
+    color: gold;
+    text-shadow: 0 0 10px #ffd700;
+}
+
+#gold-container {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 2em;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#chest-shop {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    text-align: right;
+    font-size: 1.8em;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#chest-shop button {
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 1em;
+}
+
+#controls {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#attack-button {
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    padding: 30px 60px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 2em;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
+}
+
+#hero-sprite, #monster-sprite {
+    width: 300px;
+    height: 300px;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+#experience-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+#experience-bar {
+    width: 0;
+    height: 100%;
+    background-color: #4caf50;
+    transition: width 0.3s;
+}
+
+button {
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    padding: 10px 20px; 
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 0.6em;
+}
+
+button:hover {
+    background-color: #e6c300;
+}
+
+#gear-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#monster-health {
+    font-size: 2em;
+    color: red;
+}
+
+#stats-button {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+    padding: 20px;
+    font-size: 1.5em;
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px black;
+}
+
+#stats-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 10;
+}
+
+#stats-container p {
+    font-size: 1.2em;
+    margin: 10px 0;
+}
+
+#skill-tree-button {
+    position: absolute;
+    bottom: 10%;
+    right: 5%;
+    padding: 20px;
+    font-size: 1.5em;
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px black;
+}
+
+#skill-tree-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 10;
+}
+
+#skill-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#skill-list li {
+    margin: 10px 0;
+}
+
+#prestige-button {
+    position: absolute;
+    bottom: 15%;
+    right: 5%;
+    padding: 20px;
+    font-size: 1.5em;
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px black;
+}
+
+#prestige-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 10;
+}
+
+#prestige-container p {
+    font-size: 1.2em;
+    margin: 10px 0;
+}
+
+#prestige-confirm-button {
+    background-color: #ff4c4c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 1em;
+}
+
+#prestige-confirm-button:hover {
+    background-color: #e60000;
+}
+
+#hero-gear-button {
+    position: absolute;
+    bottom: 20%;
+    right: 5%;
+    padding: 20px;
+    font-size: 1.5em;
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px black;
+}
+
+#hero-gear-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 10;
+}
+
+#inventory-container {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#inventory-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#inventory-list li {
+    margin: 5px 0;
+}
+
+#energy-container {
+    position: absolute;
+    top: 10%;
+    left: 5%;
+    font-size: 1.5em;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#random-event-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 10;
+}
+
+#random-event-button {
+    position: absolute;
+    top: 15%;
+    right: 5%;
+    padding: 20px;
+    font-size: 1.5em;
+    background-color: #ffd700;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px black;
+}
+
+#materials-message {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+    text-align: center;
+    font-size: 1.2em;
+    transition: opacity 1s ease-out;
+}
+</style>
